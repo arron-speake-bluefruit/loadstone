@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e -o pipefail
+
+SOURCE_DIRECTORY_PATH="../loadstone/"
+OUTPUT_FILE="$PWD/loadstone.bin"
+
+cd $SOURCE_DIRECTORY_PATH
+
+cargo objcopy --bin loadstone --release --target thumbv7em-none-eabihf \
+    --features stm32f412 -- -O binary $OUTPUT_FILE

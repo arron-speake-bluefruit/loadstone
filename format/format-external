@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -e -o pipefail
+
+IMAGE="./demo_app_self_booting.bin"
+ADDRESS="0x08000000"
+DEVICE="/dev/ttyUSB0"
+
+if [[ ! -e /dev/ttyUSB0 ]] ; then
+  echo "$0: error: $DEVICE does not exist"
+  exit 1
+fi
+
+echo "$0: configure $DEVICE"
+stty -F$DEVICE 115200 min 100 time 2 -hupcl brkint ignpar -icrnl -opost \
+  -onlcr -isig -icanon -echo 2>/dev/null
+
+echo "$0: write app image"
+st-flash write $IMAGE $ADDRESS 2>/dev/null
+
+echo "$0: wait for app to boot"
+head -vn4 <$DEVICE
+
+echo "$0: send format command"
+echo "format" >$DEVICE
+
+echo "$0: wait for format to complete"
+head -vn1 <$DEVICE
