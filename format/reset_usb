@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e -o pipefail
+
+lsusb | grep "STMicroelectronics" | while read _ _ _ _ _ vendor_product_id _ ; do
+    usbreset "$vendor_product_id"
+done
