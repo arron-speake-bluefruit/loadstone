@@ -3,14 +3,14 @@
 import os
 from typing import Optional, Mapping
 import subprocess
-import typing
 from behave import *
 
 SCENARIO_CONFIG_PATH = "./scenario_config.ron"
 
 def start_process(*args: str, environment: Optional[Mapping[str, str]] = None):
     """Starts a new process with the provided arguments and environment."""
-    return subprocess.Popen(list(args), env = environment, shell = True)
+    shell = environment != None
+    return subprocess.Popen(list(args), env = environment, shell = shell)
 
 def end_process(process: subprocess.Popen):
     """Waits for a process to exit, asserting that it succeeded."""
