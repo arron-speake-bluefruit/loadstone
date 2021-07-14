@@ -1,11 +1,21 @@
 #!/usr/bin/env python3
 
 import os
-from typing import Optional
+from typing import Optional, Mapping
 import subprocess
+import typing
 from behave import *
 
 SCENARIO_CONFIG_PATH = "./scenario_config.ron"
+
+def start_process(*args: str, environment: Optional[Mapping[str, str]] = None):
+    """Starts a new process with the provided arguments and environment."""
+    return subprocess.Popen(list(args), env = environment, shell = True)
+
+def end_process(process: subprocess.Popen):
+    """Waits for a process to exit, asserting that it succeeded."""
+    exit_code = process.wait()
+    assert exit_code == 0
 
 def modify_config(*args: str):
     """Modifies the loadstone config file using config-generator and the provided arguments."""
@@ -26,21 +36,9 @@ def modify_config(*args: str):
         file.write(output_config)
 
 def read_scenario_config() -> str:
+    """Returns the loadstone configuration for the active scenario."""
     with open(SCENARIO_CONFIG_PATH, "r") as file:
         return file.read()
-
-def find_stmicroelectronics_usb_device() -> Optional[str]:
-    """Attempts to find the vendor/product ID of a connected STM32F412 device."""
-    process = subprocess.Popen([ "lsusb" ], stdout=subprocess.PIPE)
-    devices = process.communicate()[0].decode("utf-8")
-    exit_code = process.wait()
-    assert exit_code == 0
-
-    lines = devices.splitlines()
-    for line in lines:
-        if "STMicroelectronics" in line:
-            return line[23:32] # Substring of the vendor and product IDs
-    return None
 
 @given("loadstone is configured for custom greeting \"{greeting}\"")
 def step_impl(context, greeting):
@@ -57,30 +55,22 @@ def step_impl(context):
 
 @given("just loadstone is loaded on the devkit")
 def step_impl(context):
-    # Build loadstone off new configuration.
     environment = os.environ.copy()
     environment["LOADSTONE_CONFIG"] = read_scenario_config()
-    cargo_process = subprocess.Popen([ "./build" ], env = environment, shell = True)
+    build_process = start_process("scripts/build", environment = environment)
 
-    # Format devkit.
-    format_process = subprocess.Popen([ "./format/run" ])
+    format_process = start_process("scripts/format/run")
 
-    cargo_exit_code = cargo_process.wait()
-    format_exit_code = format_process.wait()
-    assert (cargo_exit_code == 0) and (format_exit_code == 0)
+    end_process(build_process)
+    end_process(format_process)
 
-    # Flash image
-    process = subprocess.Popen([ "st-flash", "write", "loadstone.bin", "0x08000000" ])
-    exit_code = process.wait()
-    assert exit_code == 0
+    flash_process = start_process("st-flash", "write", "loadstone.bin", "0x08000000")
+    end_process(flash_process)
 
 @when("the devkit is powered on")
 def step_impl(context):
-    vendor_product_id = find_stmicroelectronics_usb_device()
-    assert vendor_product_id != None
-    process = subprocess.Popen([ "usbreset", vendor_product_id ])
-    exit_code = process.wait()
-    assert exit_code == 0
+    process = start_process("scripts/format/reset_usb")
+    end_process(process)
 
 @then("the following is printed to the cli")
 def step_impl(context):
