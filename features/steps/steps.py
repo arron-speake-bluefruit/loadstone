@@ -59,7 +59,7 @@ def step_impl(context):
     environment["LOADSTONE_CONFIG"] = read_scenario_config()
     build_process = start_process("scripts/build", environment = environment)
 
-    format_process = start_process("scripts/format/run")
+    format_process = start_process("scripts/format")
 
     end_process(build_process)
     end_process(format_process)
@@ -69,7 +69,7 @@ def step_impl(context):
 
 @when("the devkit is powered on")
 def step_impl(context):
-    process = start_process("scripts/format/reset_usb")
+    process = start_process("scripts/reset-usb")
     end_process(process)
 
 @then("the following is printed to the cli")

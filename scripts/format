@@ -6,7 +6,7 @@ echo "$0: check for ST-LINK programmer"
 st-info --chipid
 
 echo "$0: format external flash"
-$(dirname $0)/format-external
+scripts/format-external
 
 echo "$0: erase SRAM and internal flash"
-st-flash erase 2>/dev/null
+st-flash erase
