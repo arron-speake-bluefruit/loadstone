@@ -2,7 +2,7 @@
 
 set -e -o pipefail
 
-SOURCE_DIRECTORY_PATH="../loadstone/"
+SOURCE_DIRECTORY_PATH="loadstone/"
 OUTPUT_FILE="$PWD/loadstone.bin"
 
 cd $SOURCE_DIRECTORY_PATH

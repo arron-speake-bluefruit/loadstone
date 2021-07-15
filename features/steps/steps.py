@@ -18,10 +18,9 @@ def end_process(process: subprocess.Popen):
     assert exit_code == 0
 
 def modify_config(*args: str):
-    """Modifies the loadstone config file using config-generator and the provided arguments."""
-    CONFIG_GENERATOR_PATH = "./config-generator"
+    """Modifies the loadstone config file using confedit and the provided arguments."""
 
-    arguments = [ CONFIG_GENERATOR_PATH ]
+    arguments = [ "cargo", "run", "--manifest-path=loadstone/tools/confedit/Cargo.toml", "--" ]
     arguments.extend(args)
 
     with open(SCENARIO_CONFIG_PATH, "rb") as file:
