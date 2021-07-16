@@ -19,7 +19,7 @@ echo "$0: write app image"
 st-flash write $IMAGE $ADDRESS
 
 echo "$0: wait for app to boot"
-scripts/reset_usb
+scripts/reset-usb
 head -vn4 <$DEVICE
 
 echo "$0: send format command"
