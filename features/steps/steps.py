@@ -5,9 +5,14 @@ from typing import Optional, Mapping
 import subprocess
 from behave import *
 
+DEVKIT_STATE_CLEAN = 1
+DEVKIT_STATE_CLEAN_EXTERNAL = 2
+DEVKIT_STATE_DIRTY = 3
+devkit_state = DEVKIT_STATE_DIRTY
+
 SCENARIO_CONFIG_PATH = "./scenario_config.ron"
 
-def start_process(*args: str, environment: Optional[Mapping[str, str]] = None):
+def start_process(*args: str, environment: Optional[Mapping[str, str]] = None) -> subprocess.Popen:
     """Starts a new process with the provided arguments and environment."""
     shell = environment != None
     return subprocess.Popen(list(args), env = environment, shell = shell)
@@ -39,14 +44,32 @@ def read_scenario_config() -> str:
     with open(SCENARIO_CONFIG_PATH, "r") as file:
         return file.read()
 
+def start_cleanup() -> Optional[subprocess.Popen]:
+    """Starts a formatting subprocess, depedning on the devkit state."""
+    if devkit_state == DEVKIT_STATE_CLEAN:
+        return None
+    elif devkit_state == DEVKIT_STATE_CLEAN_EXTERNAL:
+        return start_process("scripts/format", "--internal-only")
+    else: # devkit_state == DEVKIT_STATE_DIRTY
+        return start_process("scripts/format")
+
+def end_cleanup(process: Optional[subprocess.Popen]):
+    """Wait for the format to finish and mark the devkit as clean."""
+    if process != None:
+        end_process(process)
+    devkit_state = DEVKIT_STATE_CLEAN
+
 @given("loadstone is configured for custom greeting \"{greeting}\"")
 def step_impl(context, greeting):
     modify_config("--greeting", greeting)
 
 @given("loadstone is configured for a golden bank")
 def step_impl(context):
-    # NOTE: This assumes that loadstone is currently configured with a bank 3.
     modify_config("--golden", "2")
+
+@given("loadstone is not configured for a golden bank")
+def step_impl(context):
+    modify_config("--golden", "none")
 
 @given("loadstone is configured for serial recovery")
 def step_impl(context):
@@ -58,13 +81,14 @@ def step_impl(context):
     environment["LOADSTONE_CONFIG"] = read_scenario_config()
     build_process = start_process("scripts/build", environment = environment)
 
-    format_process = start_process("scripts/format")
+    cleanup = start_cleanup()
 
     end_process(build_process)
-    end_process(format_process)
+    end_cleanup(cleanup)
 
     flash_process = start_process("st-flash", "write", "loadstone.bin", "0x08000000")
     end_process(flash_process)
+    devkit_state = DEVKIT_STATE_CLEAN_EXTERNAL
 
 @when("the devkit is powered on")
 def step_impl(context):

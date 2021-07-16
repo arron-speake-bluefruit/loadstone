@@ -5,8 +5,12 @@ set -e -o pipefail
 echo "$0: check for ST-LINK programmer"
 st-info --chipid
 
-echo "$0: format external flash"
-scripts/format-external
+if [[ "$1" == "--internal-only" ]] ; then
+    echo "$0: skipping external flash format"
+else
+    echo "$0: format external flash"
+    scripts/format-external
+fi
 
 echo "$0: erase SRAM and internal flash"
 st-flash erase
