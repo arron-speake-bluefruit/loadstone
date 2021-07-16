@@ -5,17 +5,16 @@ from typing import Optional, Mapping
 import subprocess
 from behave import *
 
+SCENARIO_CONFIG_PATH = ".scenario_config.ron"
+
 DEVKIT_STATE_CLEAN = 1
 DEVKIT_STATE_CLEAN_EXTERNAL = 2
 DEVKIT_STATE_DIRTY = 3
 devkit_state = DEVKIT_STATE_DIRTY
 
-SCENARIO_CONFIG_PATH = "./scenario_config.ron"
-
 def start_process(*args: str, environment: Optional[Mapping[str, str]] = None) -> subprocess.Popen:
     """Starts a new process with the provided arguments and environment."""
-    shell = environment != None
-    return subprocess.Popen(list(args), env = environment, shell = shell)
+    return subprocess.Popen(list(args), env = environment)
 
 def end_process(process: subprocess.Popen):
     """Waits for a process to exit, asserting that it succeeded."""
@@ -45,7 +44,7 @@ def read_scenario_config() -> str:
         return file.read()
 
 def start_cleanup() -> Optional[subprocess.Popen]:
-    """Starts a formatting subprocess, depedning on the devkit state."""
+    """Starts a subprocess to format the devkit, depending on the devkit state."""
     if devkit_state == DEVKIT_STATE_CLEAN:
         return None
     elif devkit_state == DEVKIT_STATE_CLEAN_EXTERNAL:

@@ -6,7 +6,7 @@ IMAGE="scripts/demo_app_self_booting.bin"
 ADDRESS="0x08000000"
 DEVICE="/dev/ttyUSB0"
 
-if [[ ! -e /dev/ttyUSB0 ]] ; then
+if [[ ! -e $DEVICE ]] ; then
   echo "$0: error: $DEVICE does not exist"
   exit 1
 fi
