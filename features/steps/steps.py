@@ -6,11 +6,7 @@ import subprocess
 from behave import *
 
 SCENARIO_CONFIG_PATH = ".scenario_config.ron"
-
-DEVKIT_STATE_CLEAN = 1
-DEVKIT_STATE_CLEAN_EXTERNAL = 2
-DEVKIT_STATE_DIRTY = 3
-devkit_state = DEVKIT_STATE_DIRTY
+DEVKIT_STATE_PATH = ".devkit_state"
 
 def start_process(*args: str, environment: Optional[Mapping[str, str]] = None) -> subprocess.Popen:
     """Starts a new process with the provided arguments and environment."""
@@ -43,20 +39,35 @@ def read_scenario_config() -> str:
     with open(SCENARIO_CONFIG_PATH, "r") as file:
         return file.read()
 
+def assert_valid_devkit_state(state: str):
+    assert (state == "clean") or (state == "clean external") or (state == "dirty")
+
+def get_devkit_state() -> str:
+    with open(DEVKIT_STATE_PATH, "r") as state_file:
+        state = state_file.read()
+    assert_valid_devkit_state(state)
+    return state
+
+def set_devkit_state(state: str):
+    assert_valid_devkit_state(state)
+    with open(DEVKIT_STATE_PATH, "w") as state_file:
+        return state_file.write(state)
+
 def start_cleanup() -> Optional[subprocess.Popen]:
     """Starts a subprocess to format the devkit, depending on the devkit state."""
-    if devkit_state == DEVKIT_STATE_CLEAN:
+    state = get_devkit_state()
+    if state == "clean":
         return None
-    elif devkit_state == DEVKIT_STATE_CLEAN_EXTERNAL:
+    elif state == "clean external":
         return start_process("scripts/format", "--internal-only")
-    else: # devkit_state == DEVKIT_STATE_DIRTY
+    else: # state == "dirty"
         return start_process("scripts/format")
 
 def end_cleanup(process: Optional[subprocess.Popen]):
     """Wait for the format to finish and mark the devkit as clean."""
     if process != None:
         end_process(process)
-    devkit_state = DEVKIT_STATE_CLEAN
+    set_devkit_state("clean")
 
 @given("loadstone is configured for custom greeting \"{greeting}\"")
 def step_impl(context, greeting):
@@ -87,7 +98,7 @@ def step_impl(context):
 
     flash_process = start_process("st-flash", "write", "loadstone.bin", "0x08000000")
     end_process(flash_process)
-    devkit_state = DEVKIT_STATE_CLEAN_EXTERNAL
+    set_devkit_state("clean external")
 
 @when("the devkit is powered on")
 def step_impl(context):

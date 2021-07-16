@@ -1,4 +1,5 @@
 /.scenario_config.ron
+/.devkit_state
 /demo_app_self_booting.bin
 /loadstone.bin
 /loadstone/
