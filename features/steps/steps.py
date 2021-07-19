@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
 import os
-from typing import Optional, Mapping
+import time
 import subprocess
+from typing import Optional, Mapping, BinaryIO
 from behave import *
 
 SCENARIO_CONFIG_PATH = ".scenario_config.ron"
 DEVKIT_STATE_PATH = ".devkit_state"
+SERIAL_DEVICE_PATH = "/dev/ttyUSB0"
 
 def start_process(*args: str, environment: Optional[Mapping[str, str]] = None) -> subprocess.Popen:
     """Starts a new process with the provided arguments and environment."""
@@ -69,6 +71,31 @@ def end_cleanup(process: Optional[subprocess.Popen]):
         end_process(process)
     set_devkit_state("clean")
 
+def try_read_bytes_from_file(file: BinaryIO, expected: bytes, timeout: float) -> bool:
+    """Attempts to read `expected` bytes from `file` in `timeout` seconds."""
+    start_time = time.time()
+
+    f = open("debug", "wb")
+
+    index = 0
+    while index < len(expected):
+        did_time_out = (time.time() - start_time) > timeout
+        if did_time_out:
+            return False
+
+        b = file.read(1)
+        if len(b) != 1:
+            return False
+
+        f.write(b)
+        f.flush()
+
+        if b == expected[index]:
+            index += 1
+        else:
+            index = 0
+    return True
+
 @given("loadstone is configured for custom greeting \"{greeting}\"")
 def step_impl(context, greeting):
     modify_config("--greeting", greeting)
@@ -105,9 +132,26 @@ def step_impl(context):
     process = start_process("scripts/reset-usb")
     end_process(process)
 
+@when("loadstone enters serial recovery mode")
+def step_impl(context):
+    set_devkit_state("dirty")
+
+    EXPECTED = bytes("-- Loadstone Recovery Mode --", "utf-8")
+    TIMEOUT_SECONDS = 20.0
+
+    with open(SERIAL_DEVICE_PATH, "rb") as file:
+        assert try_read_bytes_from_file(file, EXPECTED, TIMEOUT_SECONDS)
+
+    time.sleep(1)
+
+@when("a golden firmware image is uploaded using xmodem")
+def step_impl(context):
+    GOLDEN_IMAGE_PATH = "images/golden_demo_app.bin"
+    process = start_process("loadstone/tools/upload.sh", GOLDEN_IMAGE_PATH, SERIAL_DEVICE_PATH)
+    end_process(process)
+
 @then("the following is printed to the cli")
 def step_impl(context):
-    SERIAL_DEVICE_PATH = "/dev/ttyUSB0"
     with open(SERIAL_DEVICE_PATH, "rb") as file:
         for expected in bytes(context.text, "utf-8"):
             actual = file.read(1)
