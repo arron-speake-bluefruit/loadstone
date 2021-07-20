@@ -9,8 +9,8 @@ jobs:
       - name: Checkout loadstone
         uses: actions/checkout@v2
         with:
-          repository: absw/loadstone
-          ref: staging
+          repository: arron-speake-bluefruit/loadstone
+          ref: confedit-tool
           path: "loadstone/"
       - name: Run tests
         run: behave
