@@ -75,8 +75,6 @@ def try_read_bytes_from_file(file: BinaryIO, expected: bytes, timeout: float) ->
     """Attempts to read `expected` bytes from `file` in `timeout` seconds."""
     start_time = time.time()
 
-    f = open("debug", "wb")
-
     index = 0
     while index < len(expected):
         did_time_out = (time.time() - start_time) > timeout
@@ -86,9 +84,6 @@ def try_read_bytes_from_file(file: BinaryIO, expected: bytes, timeout: float) ->
         b = file.read(1)
         if len(b) != 1:
             return False
-
-        f.write(b)
-        f.flush()
 
         if b == expected[index]:
             index += 1
