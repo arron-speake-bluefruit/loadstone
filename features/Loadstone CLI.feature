@@ -36,3 +36,16 @@ Scenario: Loadstone requests a recovery firmware image
     Attempting image recovery to MCU flash...
     Please send firmware image via XMODEM.
     """
+
+Scenario: A golden firmware image is uploaded when a golden bank configured loadstone is in recovery mode
+    Given loadstone is configured for a golden bank
+    And loadstone is configured for serial recovery
+    And just loadstone is loaded on the devkit
+    When the devkit is powered on
+    And loadstone enters serial recovery mode
+    And a golden firmware image is uploaded using xmodem
+    Then the following is printed to the cli
+    """
+    Finished flashing golden image.
+    Rebooting..
+    """
