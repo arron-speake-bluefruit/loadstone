@@ -12,3 +12,5 @@ jobs:
           repository: absw/loadstone
           ref: staging
           path: "loadstone/"
+      - name: Run tests
+        run: behave
