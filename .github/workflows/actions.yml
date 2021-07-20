@@ -1,0 +1,13 @@
+name: actions
+on: [push, pull_request, workflow_dispatch]
+
+  testing:
+    steps:
+      - name: Checkout test suite
+        uses: actions/checkout@v2
+      - name: Checkout loadstone
+        uses: actions/checkout@v2
+        with:
+          repository: absw/loadstone
+          ref: staging
+          path: "loadstone/"
