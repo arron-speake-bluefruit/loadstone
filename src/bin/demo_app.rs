@@ -9,6 +9,8 @@ pub const HEAP_SIZE_BYTES: usize = 8192;
 #[cfg(all(target_arch = "arm", feature = "stm32f412"))]
 #[entry]
 fn main() -> ! {
+    waga baba bobo
+
     let heap_start = cortex_m_rt::heap_start() as usize;
     unsafe { loadstone_lib::ALLOCATOR.init(heap_start, HEAP_SIZE_BYTES) }
 
